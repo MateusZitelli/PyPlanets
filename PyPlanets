@@ -298,8 +298,7 @@ class Simulacao:
 						colisao = False
 						fusao = Distancia2 <= (C.raio+C2.raio)
 
-					if Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2:
-					#if Distancia2 < (C.raio+C2.raio):
+					if colisao:
 						Distancia = C.raio+C2.raio
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
@@ -312,7 +311,7 @@ class Simulacao:
 						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C2.mass+C.mass)
 						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C2.mass+C.mass)
 						C2.velx,C2.vely = C.velx,C.vely
-					elif Distancia2 <= (C.raio+C2.raio)/3.0*2:
+					elif fusao:
 						C.velx = ((C.mass*C.velx)+(C2.mass*C2.velx))/(C.mass+C2.mass)
 						C.vely = ((C.mass*C.vely)+(C2.mass*C2.vely))/(C.mass+C2.mass)
 						C.x = ((C.mass*C.x)+(C2.mass*C2.x))/(C.mass+C2.mass)
