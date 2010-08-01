@@ -33,7 +33,7 @@ class Corpo:
 		self.mass = massa 
 		self.velx = float(velxA/10**0) #Cuidado: dependendo do valor pode estourar o Float
 		self.vely = float(velyA/10**0)
-		self.raio = (self.mass/pi*5)**(1/3.0)
+		self.raio = (self.mass/pi*5)**(1/2.0)
 		self.cor = (int(255-random.random()*200),int(255-random.random()*200),int(255-random.random()*200))
 
 class Simulacao:
@@ -172,7 +172,7 @@ class Simulacao:
 				else:
 					y = mouse_y - disty*(1-self.zoom**-1)
 				print x,y
-				self.corpos.append(Corpo(x,y,-5.0,0.0,4000.0))
+				self.corpos.append(Corpo(x,y,0.0,0.0,100.0))
 
 			if mouse[1]:
 				mouse_x,mouse_y = pygame.mouse.get_pos()
@@ -188,7 +188,7 @@ class Simulacao:
 				else:
 					y = mouse_y - disty*(1-self.zoom**-1)
 				print x,y
-				self.corpos.append(Corpo(x,y,5.0,0.0,4000.0))
+				self.corpos.append(Corpo(x,y,0.0,0.0,1000.0))
 
 			if mouse[2]:
 				mouse_x,mouse_y = pygame.mouse.get_pos()
@@ -204,7 +204,7 @@ class Simulacao:
 				else:
 					y = mouse_y - disty*(1-self.zoom**-1)
 				print x,y
-				self.corpos.append(Corpo(x,y,0.0,0.0,100.0))
+				self.corpos.append(Corpo(x,y,2.0,0.0,100.0))
 
 			if key_pressed[K_DOWN]: #Move a camera para BAIXO quando apertado a SETA PARA BAIXO.
 				for i in self.corpos:
@@ -283,33 +283,36 @@ class Simulacao:
 			if P.y < 0:     P.y = self.tamanho[1];
 
 	#Detecta a colisao estre objetos#
-	#3 modos:
-	#	modo = 1 - Objetos se fundem quando colidem
-	#	modo = 2 - Objetos ficam encostados depois que colidem #Com defeitos
-	# modo = 3 - Objetos ficam encostados, mas se houver muita forca de atracao entre os objetos eles de fundem #Com defeitos
-	def aglomerationDetect(self,vf = 1, vf2 = 0, vf3 = 0):
+	def aglomerationDetect(self, colisao = 1, fusao = 1):
 		for C in self.corpos:
 			for C2 in self.corpos:
 				if C != C2:
-					Distancia = sqrt(  (((C.x+C.velx)-(C2.x+C2.velx))**2)  +  (((C.y+C.vely)-(C2.y+C2.vely))**2)  )
-					vf = (Distancia <= (C.raio+C2.raio)) and vf
-					vf2 = (Distancia <= (C.raio+C2.raio)) and vf2
-					vf3 = (Distancia <= (C.raio+C2.raio)) and vf3
-					if vf: #Deixa os corpos encostados
-						velabs = sqrt(C.velx**2+C.vely**2)
+					Distancia2 = sqrt(  ((C.x-C2.x)**2)  +  ((C.y-C2.y)**2)  )
+					if colisao and fusao:
+						colisao = Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2
+						fusao = Distancia2 <= (C.raio+C2.raio)/3.0*2
+					elif colisao and not fusao:
+						colisao = Distancia2 < (C.raio+C2.raio)
+						fusao = False
+					else:
+						colisao = False
+						fusao = Distancia2 <= (C.raio+C2.raio)
+
+					if Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2:
+					#if Distancia2 < (C.raio+C2.raio):
+						Distancia = C.raio+C2.raio
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
-						local_impacto = (C.x + C.raio*cos(anglo),C.y + C.raio*sin(anglo))
-						C.x = local_impacto[0]+cos(anglo)*C.raio
-						C.y = local_impacto[1]+sin(anglo)*C.raio
-						C2.x = local_impacto[0]-cos(anglo)*C2.raio
-						C2.y = local_impacto[1]-sin(anglo)*C2.raio
-						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C.mass+C2.mass)
-						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C.mass+C2.mass)
+						razao = C.raio/C2.raio
+						inter = (C.x+C.raio*-sin(anglo),C.y+C.raio*-cos(anglo))
+						C.x = inter[0] + C.raio*sin(anglo)
+						C.y = inter[1] + C.raio*cos(anglo)
+						C2.x = inter[0] + C2.raio*-sin(anglo)
+						C2.y = inter[1] + C2.raio*-cos(anglo)
+						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C2.mass+C.mass)
+						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C2.mass+C.mass)
 						C2.velx,C2.vely = C.velx,C.vely
-						
-
-					elif vf2: #Funde os corpos
+					elif Distancia2 <= (C.raio+C2.raio)/3.0*2:
 						C.velx = ((C.mass*C.velx)+(C2.mass*C2.velx))/(C.mass+C2.mass)
 						C.vely = ((C.mass*C.vely)+(C2.mass*C2.vely))/(C.mass+C2.mass)
 						C.x = ((C.mass*C.x)+(C2.mass*C2.x))/(C.mass+C2.mass)
@@ -319,21 +322,13 @@ class Simulacao:
 						C.cor = ((C.cor[0]+C2.cor[0])/2.0,(C.cor[1]+C2.cor[1])/2.0,(C.cor[2]+C2.cor[2])/2.0)
 						self.corpos.remove(C2)
 
-					elif vf3: #Choque elastico #Nao funciona
-						dif = (C.x-C2.x,C.y-C2.y)
-						anglo = atan2(dif[0],dif[1])
-						local_impacto = (C.x + C.raio*-sin(anglo),C.y + C.raio*-cos(anglo))
-						C.velx -= C2.velx
-						C.vely -= C2.velx
-						C2.velx -= C.velx
-						C2.vely -= C.vely
 	def main_loop(self): #Roda a simulacao
 		while True:
 			self.vezes += 1
 			self.GetInput()
 			if not self.pausado:
 				self.move()
-				#self.aglomerationDetect(0,0,0)
+				self.aglomerationDetect()
 				#self.Collision_with_edge()
 			self.draw()
 
