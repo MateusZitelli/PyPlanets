@@ -296,7 +296,6 @@ class Simulacao:
 					vf2 = (Distancia <= (C.raio+C2.raio)) and vf2
 					vf3 = (Distancia <= (C.raio+C2.raio)) and vf3
 					if vf: #Deixa os corpos encostados
-						print "oi"
 						velabs = sqrt(C.velx**2+C.vely**2)
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
