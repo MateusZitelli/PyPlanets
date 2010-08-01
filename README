@@ -1,0 +1,24 @@
+		PyGame Version 0.1
+
+PyPlanets is Free Software!
+PyPlanets is a gravitational simulator writed in python.
+
+Requeriments:
+	*Python(Tested in version 2.6)
+	*PyGame(Tested in version 1.9)
+
+How to run:
+	*cd directory_where_PyPlanet_is
+	*./PyPlanets width height
+	or
+	*./PyPlanets #to run in default mode (600x480)
+
+Do you want to install? Try it!: #Installation for GNU/Linux
+	*cd directory_where_PyPlanet_is
+	*sudo mv PyPlanets /usr/bin/
+	*chmod +x /usr/bin/PyPlanets
+	#And now you only need to run:
+	*PyPlanets
+
+Author
+	*Mateus Zitelli (zitellimateus@gmail.com)
