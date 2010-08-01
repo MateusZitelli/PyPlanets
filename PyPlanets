@@ -287,33 +287,24 @@ class Simulacao:
 	#	modo = 1 - Objetos se fundem quando colidem
 	#	modo = 2 - Objetos ficam encostados depois que colidem #Com defeitos
 	# modo = 3 - Objetos ficam encostados, mas se houver muita forca de atracao entre os objetos eles de fundem #Com defeitos
-	def aglomerationDetect(self,vf = 1, vf2 = 1, vf3 = 1):
+	def aglomerationDetect(self,vf = 1, vf2 = 0, vf3 = 0):
 		for C in self.corpos:
 			for C2 in self.corpos:
 				if C != C2:
 					Distancia = sqrt(  (((C.x+C.velx)-(C2.x+C2.velx))**2)  +  (((C.y+C.vely)-(C2.y+C2.vely))**2)  )
-					if vf:
-						vf = Distancia <= (C.raio+C2.raio)
-						vf2 = False
-						vf3 = False
-					elif vf2:
-						vf = False
-						vf2 = True
-						vf3 = False
-					elif vf3:
-						vf = False
-						vf2 = False
-						vf3 = Distancia <= (C.raio+C2.raio)
-
+					vf = (Distancia <= (C.raio+C2.raio)) and vf
+					vf2 = (Distancia <= (C.raio+C2.raio)) and vf2
+					vf3 = (Distancia <= (C.raio+C2.raio)) and vf3
 					if vf: #Deixa os corpos encostados
+						print "oi"
 						velabs = sqrt(C.velx**2+C.vely**2)
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
-						local_impacto = (C.x + C.raio*-sin(anglo),C.y + C.raio*-cos(anglo))
-						C.x = local_impacto[0]+sin(anglo)*C.raio
-						C.y = local_impacto[1]+cos(anglo)*C.raio
-						C2.x = local_impacto[0]-sin(anglo)*C2.raio
-						C2.y = local_impacto[1]-cos(anglo)*C2.raio
+						local_impacto = (C.x + C.raio*cos(anglo),C.y + C.raio*sin(anglo))
+						C.x = local_impacto[0]+cos(anglo)*C.raio
+						C.y = local_impacto[1]+sin(anglo)*C.raio
+						C2.x = local_impacto[0]-cos(anglo)*C2.raio
+						C2.y = local_impacto[1]-sin(anglo)*C2.raio
 						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C.mass+C2.mass)
 						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C.mass+C2.mass)
 						C2.velx,C2.vely = C.velx,C.vely
@@ -329,7 +320,7 @@ class Simulacao:
 						C.cor = ((C.cor[0]+C2.cor[0])/2.0,(C.cor[1]+C2.cor[1])/2.0,(C.cor[2]+C2.cor[2])/2.0)
 						self.corpos.remove(C2)
 
-					elif vf3: #Choque elastico
+					elif vf3: #Choque elastico #Nao funciona
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
 						local_impacto = (C.x + C.raio*-sin(anglo),C.y + C.raio*-cos(anglo))
@@ -343,7 +334,7 @@ class Simulacao:
 			self.GetInput()
 			if not self.pausado:
 				self.move()
-				self.aglomerationDetect(0,0,0)
+				#self.aglomerationDetect(0,0,0)
 				#self.Collision_with_edge()
 			self.draw()
 
