@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python2.6
 #  -*- coding: utf-8 -*-
 # Requires pygame
 """
@@ -27,7 +27,7 @@ import random
 pygame.init()
 
 class Corpo:
-	def __init__(self,cordx,cordy,velxA,velyA,massa):
+	def __init__(self,cordx,cordy,velxA,velyA,massa): #(x,y,speedX,speedY,mass)
 		self.x = cordx
 		self.y = cordy
 		self.mass = massa 
@@ -53,7 +53,7 @@ class Simulacao:
 			const_gravitacional = 6.67428E-11
 			xdif,ydif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y)
 			dist = sqrt((xdif)**2+(ydif)**2) #Simplified to the next formula
-			if dist == 0 : dist = 0.1E-30 #Evitar errros de divisao por 0
+			if dist < (corpo_a.raio+corpo_b.raio): dist = corpo_a.raio+corpo_b.raio
 			forc = (const_gravitacional*(corpo_a.mass*10**10)*(corpo_b.mass*10**10))/(dist*10**6)**2 #F = (Constant*massA*massB)/dist**2
 		else:
 			if (corpo_b,corpo_a) in self.valores:
@@ -82,8 +82,8 @@ class Simulacao:
 		for cA in self.corpos:
 			for cB in self.corpos:
 				if cA != cB:
-					pass
 					self.interacao(cA,cB)
+
 		for obj in self.corpos:
 			obj.x += obj.velx
 			obj.y += obj.vely
@@ -107,7 +107,7 @@ class Simulacao:
 			else:
 				y = C.y - disty*(1-self.zoom)
 
-			pygame.draw.circle(self.surface,C.cor,(int(x),int(y)),C.raio*self.zoom)
+			pygame.draw.circle(self.surface,C.cor,(int(x),int(y)),int(round(C.raio*self.zoom)))
 		pygame.display.flip()
 
 	def orbitas(self,n): #cria corpos distribuidos uniformemente em um quadrado
@@ -126,7 +126,7 @@ class Simulacao:
 		self.surface.fill((0,0,0))
 		self.corpos.append(Corpo(400,-500,0.7,0.0,500.0))
 		self.corpos.append(Corpo(400,1500,-0.7,0.0,500.0))
-		self.corpos.append(Corpo(400,300,2.5,0.0,10.0))
+		self.corpos.append(Corpo(400,0,2.0,0.0,50.0))
 
 	def scan(self): #Precisa de melhorias # Gera uma imagem do campo gravitacional.
 		potencia = []
@@ -245,15 +245,15 @@ class Simulacao:
 					pygame.display.flip()
 					event2 = pygame.event.poll()
 					if event2.type == MOUSEBUTTONUP: break
-				print "Novo objeto:"
-				massa = raw_input("Digite a massa:")
+				print "New Body:"
+				massa = raw_input("Mass:")
 				self.corpos.append(Corpo(local[0],local[1],velocidadeX,velocidadeY,float(massa)))
 
 			elif key_pressed[K_p]: #tecla P => Pausa/Roda o jogo
 				self.pausado = not self.pausado
 
 			elif key_pressed[K_t]: #Tecla T => Corpos randomicos pela tela
-				self.criar(input("Quantas novas particulas?"),input("\nQual a massa?"))
+				self.criar(input("How many Bodies?"),input("\nMass:"))
 
 			elif key_pressed[K_KP_PLUS]: #Tecla + => Almenta o Zoom
 				self.zoom *= 2.0
@@ -262,7 +262,7 @@ class Simulacao:
 				self.zoom /= 2.0
 
 			elif key_pressed[K_o]: #Tecla O => Gera quadrado de corpos
-				self.orbitas(input("Quantos objetos?"))
+				self.orbitas(input("How many Bodies?"))
 
 			elif key_pressed[K_0]: #Tecla 0 => Zoom volta ao padrao
 				self.zoom = 1.0
@@ -283,22 +283,13 @@ class Simulacao:
 			if P.y < 0:     P.y = self.tamanho[1];
 
 	#Detecta a colisao estre objetos#
-	def aglomerationDetect(self, colisao = 1, fusao = 1):
+	def aglomerationDetect(self):
 		for C in self.corpos:
 			for C2 in self.corpos:
 				if C != C2:
 					Distancia2 = sqrt(  ((C.x-C2.x)**2)  +  ((C.y-C2.y)**2)  )
-					if colisao and fusao:
-						colisao = Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2
-						fusao = Distancia2 <= (C.raio+C2.raio)/3.0*2
-					elif colisao and not fusao:
-						colisao = Distancia2 < (C.raio+C2.raio)
-						fusao = False
-					else:
-						colisao = False
-						fusao = Distancia2 <= (C.raio+C2.raio)
 
-					if colisao:
+					if Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2: #Objects collision
 						Distancia = C.raio+C2.raio
 						dif = (C.x-C2.x,C.y-C2.y)
 						anglo = atan2(dif[0],dif[1])
@@ -311,7 +302,8 @@ class Simulacao:
 						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C2.mass+C.mass)
 						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C2.mass+C.mass)
 						C2.velx,C2.vely = C.velx,C.vely
-					elif fusao:
+
+					elif Distancia2 <= (C.raio+C2.raio)/3.0*2: #Objects Fusion
 						C.velx = ((C.mass*C.velx)+(C2.mass*C2.velx))/(C.mass+C2.mass)
 						C.vely = ((C.mass*C.vely)+(C2.mass*C2.vely))/(C.mass+C2.mass)
 						C.x = ((C.mass*C.x)+(C2.mass*C2.x))/(C.mass+C2.mass)
@@ -322,7 +314,9 @@ class Simulacao:
 						self.corpos.remove(C2)
 
 	def main_loop(self): #Roda a simulacao
+		clock = pygame.time.Clock()
 		while True:
+			clock.tick(200)
 			self.vezes += 1
 			self.GetInput()
 			if not self.pausado:
@@ -334,8 +328,8 @@ class Simulacao:
 if __name__ == "__main__":
 	if not len(sys.argv[1:]):
 		print "The correct syntax is \'python pygravity X_size Y_size\'"
-		print "But the simulation will run in the default mode (600x480)."
-		jogo = Simulacao((600,480))
+		print "But the simulation will run in the default mode (800x600)."
+		jogo = Simulacao((800,600))
 	elif len(sys.argv[1:]) == 2:
 		jogo = Simulacao((int(sys.argv[1]),int(sys.argv[2])))
 	else:
