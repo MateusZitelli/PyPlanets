@@ -1,13 +1,10 @@
-
 #include <stdio.h>
 #include <math.h>
 #include "Python.h"
 
 
-// Assinatura do nosso modulo
 void initcontas(void);
 
-// Função principal que embute o python dentro do C.
 main(int argc, char **argv) {
 	// Inicializa o Interpretador python embutido
 	Py_Initialize();
