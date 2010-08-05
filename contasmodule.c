@@ -7,7 +7,7 @@
 
 void initcontas(void);
 
-main(int argc, char **argv) {
+main(int argc, char **argv){
 	// Inicializa o Interpretador python embutido
 	Py_Initialize();
 	// Adiciona o nosso modulo
@@ -16,25 +16,22 @@ main(int argc, char **argv) {
 	Py_Exit(0);
 }
 
-static PyObject *contas_forc(PyObject *self, PyObject* args)
-{
-	double xdif;
-	double ydif;
-	double dist;
-	double force;
-	double  ax , ay , ar , am , bx , by , br, bm;
+static PyObject *contas_forc(PyObject *self, PyObject* args){
+	double x_diff, y_diff, distance, force;
+	double ax, ay, ar, am, bx, by, br, bm;
 
 	if (!PyArg_ParseTuple(args, "dddddddd", &ax , &ay , &ar , &am , &bx , &by , &br, &bm)) {
 		return NULL;
 	}
-	xdif = ax-bx;
-	ydif = ay-by;
-	dist = sqrt(pow(xdif,2)+pow(ydif,2));
-	if(dist < (ar+br))
-	{
-		dist = br+ar;
+	x_diff = ax - bx;
+	y_diff = ay - by;
+	distance = sqrt(pow(x_diff, 2) + pow(y_diff, 2));
+
+	if(distance < (ar + br)) {
+		distance = ar + br;
 	}
-	force = (CONST_GRAVITACIONAL*am*pow(10,10)*bm*pow(10,10))/pow(dist*pow(10,6),2); //F = (Constant*massA*massB)/dist**2
+	force = (CONST_GRAVITACIONAL * am * pow(10, 10) * bm * pow(10, 10)) / pow(dist * pow(10, 6), 2); //F = (Constant*massA*massB)/dist**2
+
 	return PyFloat_FromDouble(force);
 }
 
@@ -44,8 +41,7 @@ static PyMethodDef contas_methods[] = {
 	{NULL, NULL} //sentinela
 };
 
-void initcontas(void)
-{
+void initcontas(void) {
 	PyImport_AddModule("contas");
 	Py_InitModule("contas", contas_methods);
 }
