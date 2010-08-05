@@ -24,6 +24,7 @@ import sys
 import time
 from decimal import *
 import random
+import contas
 pygame.init()
 
 class Corpo:
@@ -50,11 +51,13 @@ class Simulacao:
 
 	def interacao(self,corpo_a,corpo_b):
 		if not (corpo_a,corpo_b) in self.valores and not (corpo_b,corpo_a) in self.valores:
-			const_gravitacional = 6.67428E-11
+			forc = contas.forc(corpo_a.x,corpo_a.y,corpo_a.raio,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.raio,corpo_b.mass)
+			#const_gravitacional = 6.67428E-11
 			xdif,ydif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y)
 			dist = sqrt((xdif)**2+(ydif)**2) #Simplified to the next formula
 			if dist < (corpo_a.raio+corpo_b.raio): dist = corpo_a.raio+corpo_b.raio
-			forc = (const_gravitacional*(corpo_a.mass*10**10)*(corpo_b.mass*10**10))/(dist*10**6)**2 #F = (Constant*massA*massB)/dist**2
+			#forc = (const_gravitacional*(corpo_a.mass*10**10)*(corpo_b.mass*10**10))/(dist*10**6)**2 #F = (Constant*massA*massB)/dist**2
+
 		else:
 			if (corpo_b,corpo_a) in self.valores:
 				val = self.valores[(corpo_b,corpo_a)]
@@ -73,7 +76,7 @@ class Simulacao:
 		corpo_a.velx -= aceleration * Xcomp
 		corpo_a.vely -= aceleration * Ycomp
 		self.valores[(corpo_a,corpo_b)] = (forc,(xdif,ydif),dist)
-		return forc
+
 	##############################
 	#Move os objetos a cada ciclo#
 	##############################
@@ -126,7 +129,7 @@ class Simulacao:
 		self.surface.fill((0,0,0))
 		self.corpos.append(Corpo(400,-500,0.7,0.0,500.0))
 		self.corpos.append(Corpo(400,1500,-0.7,0.0,500.0))
-		self.corpos.append(Corpo(400,0,2.0,0.0,50.0))
+		#self.corpos.append(Corpo(400,0,2.0,0.0,50.0))
 
 	def scan(self): #Precisa de melhorias # Gera uma imagem do campo gravitacional.
 		potencia = []
@@ -314,10 +317,7 @@ class Simulacao:
 						self.corpos.remove(C2)
 
 	def main_loop(self): #Roda a simulacao
-		clock = pygame.time.Clock()
 		while True:
-			clock.tick(200)
-			self.vezes += 1
 			self.GetInput()
 			if not self.pausado:
 				self.move()
