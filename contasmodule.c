@@ -2,6 +2,8 @@
 #include <math.h>
 #include "Python.h"
 
+#define CONST_GRAVITACIONAL 6.67428 * pow(10.0, -11.0)
+
 
 void initcontas(void);
 
@@ -16,7 +18,6 @@ main(int argc, char **argv) {
 
 static PyObject *contas_forc(PyObject *self, PyObject* args)
 {
-	double const_gravitacional = 6.67428*pow(10.0,-11.0);
 	double xdif;
 	double ydif;
 	double dist;
@@ -33,7 +34,7 @@ static PyObject *contas_forc(PyObject *self, PyObject* args)
 	{
 		dist = br+ar;
 	}
-	force = (const_gravitacional*am*pow(10,10)*bm*pow(10,10))/pow(dist*pow(10,6),2); //F = (Constant*massA*massB)/dist**2
+	force = (CONST_GRAVITACIONAL*am*pow(10,10)*bm*pow(10,10))/pow(dist*pow(10,6),2); //F = (Constant*massA*massB)/dist**2
 	return PyFloat_FromDouble(force);
 }
 
