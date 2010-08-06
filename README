@@ -7,18 +7,12 @@ Requeriments:
 	*Python(Tested in version 2.6)
 	*PyGame(Tested in version 1.9)
 
-How to run:
+How to install:
 	*cd directory_where_PyPlanet_is
-	*./PyPlanets width height
-	or
-	*./PyPlanets #to run in default mode (600x480)
-
-Do you want to install? Try it!: #Installation for GNU/Linux
-	*cd directory_where_PyPlanet_is
-	*sudo mv PyPlanets /usr/bin/
-	*chmod +x /usr/bin/PyPlanets
-	#And now you only need to run:
-	*PyPlanets
+	*chmod +x ./install.sh
+	*sudo ./install.sh
+	#And now only run:
+	*PyPlanets #Width Heigth - if you want.
 
 Keys:
 	*Arrows => move the camera.
