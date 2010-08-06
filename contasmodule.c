@@ -26,9 +26,9 @@ static PyObject *contas_forc(PyObject *self, PyObject* args){
 	x_diff = ax - bx;
 	y_diff = ay - by;
 
-	dist = sqrt(pow(x_diff, 2) + pow(y_diff, 2));
-	if(distance < (ar + br)) {
-		distance = ar + br;
+	dist = sqrt(x_diff*x_diff + y_diff*y_diff);
+	if(dist < (ar + br)) {
+		dist = ar + br;
 	}
 
 	/* Changing the units. Using pure numbers instead of pow().
@@ -38,7 +38,7 @@ static PyObject *contas_forc(PyObject *self, PyObject* args){
 	bm = bm * 10000000000;
 	dist = dist * 1000000;
 
-	force = (CONST_GRAVITACIONAL * am * bm) / pow(dist, 2); //F = (Constant*massA*massB)/dist**2
+	force = (CONST_GRAVITACIONAL * am * bm) / dist*dist; //F = (Constant*massA*massB)/dist**2
 
 	return PyFloat_FromDouble(force);
 }
