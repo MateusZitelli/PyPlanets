@@ -52,6 +52,7 @@ class Simulacao:
 	def interacao(self,corpo_a,corpo_b):
 		if not (corpo_a,corpo_b) in self.valores and not (corpo_b,corpo_a) in self.valores:
 			forc = contas.forc(corpo_a.x,corpo_a.y,corpo_a.raio,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.raio,corpo_b.mass)
+			#print forc
 			#const_gravitacional = 6.67428E-11
 			xdif,ydif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y)
 			dist = sqrt((xdif)**2+(ydif)**2) #Simplified to the next formula
@@ -129,7 +130,8 @@ class Simulacao:
 		self.surface.fill((0,0,0))
 		self.corpos.append(Corpo(400,-500,0.7,0.0,500.0))
 		self.corpos.append(Corpo(400,1500,-0.7,0.0,500.0))
-		#self.corpos.append(Corpo(400,0,2.0,0.0,50.0))
+		self.corpos.append(Corpo(400,400,2.0,0.0,0.1E-10))
+		self.corpos.append(Corpo(400,600,-2.0,0.0,0.1E-10))
 
 	def scan(self): #Precisa de melhorias # Gera uma imagem do campo gravitacional.
 		potencia = []
