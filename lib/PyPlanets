@@ -17,15 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pygame
+import pygame , sys , time , random , pyplanets_calculations
 from pygame.locals import *
 from math import *
-import sys
-import time
 from decimal import *
-import random
-import contas
-pygame.init()
 
 class Corpo:
 	def __init__(self,cordx,cordy,velxA,velyA,massa,raio = False): #(x,y,speedX,speedY,mass)
@@ -57,11 +52,11 @@ class Simulacao:
 		if corpo_a.mass == 0:
 			corpo_a.mass = 0.1E-30
 		if not (corpo_a,corpo_b) in self.valores and not (corpo_b,corpo_a) in self.valores:
-			forc = contas.forc(corpo_a.x,corpo_a.y,corpo_a.raio,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.raio,corpo_b.mass)
+			forc = pyplanets_calculations.forc(corpo_a.x,corpo_a.y,corpo_a.raio,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.raio,corpo_b.mass)
 			#print forc
 			#const_gravitacional = 6.67428E-11
 			xdif,ydif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y)
-			dist = contas.dist(corpo_a.x,corpo_a.y,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.mass) #Simplified to the next formula
+			dist = pyplanets_calculations.dist(corpo_a.x,corpo_a.y,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.mass) #Simplified to the next formula
 			#forc = (const_gravitacional*(corpo_a.mass*10**10)*(corpo_b.mass*10**10))/(dist*10**6)**2 #F = (Constant*massA*massB)/dist**2
 
 		else:
@@ -71,7 +66,7 @@ class Simulacao:
 				xdif,ydif = -val[1][0],-val[1][1]
 				dist = val[2]
 		#if self.relativity:
-			#mass = contas.relativistic_mass(abs(corpo_a.velx),abs(corpo_a.vely),corpo_a.mass)
+			#mass = pyplanets_calculations.relativistic_mass(abs(corpo_a.velx),abs(corpo_a.vely),corpo_a.mass)
 		#else:
 			#mass = corpo_a.mass
 		mass = corpo_a.mass
@@ -81,7 +76,7 @@ class Simulacao:
 		else:
 			aceleration = (forc/mass)*10**3
 		Xcomp = xdif/dist
-		Ycomp = ydif/dist
+		Ycomp = ydif/dist	
 		corpo_a.velx -= aceleration * Xcomp
 		corpo_a.vely -= aceleration * Ycomp
 		self.valores[(corpo_a,corpo_b)] = (forc,(xdif,ydif),dist)
@@ -139,7 +134,7 @@ class Simulacao:
 		self.corpos.append(Corpo(400,-500,0.7,0.0,500.0))
 		self.corpos.append(Corpo(400,1500,-0.7,0.0,500.0))
 		for i in range(20):
-			self.corpos.append(Corpo(400,i*100-500,2.0,0.0,0))
+			self.corpos.append(Corpo(400,i*30-400,2.0,0.0,10))
 		#self.corpos.append(Corpo(400,550,-2.0,0.0,0.1E-10))
 
 	def scan(self): #Precisa de melhorias # Gera uma imagem do campo gravitacional.
@@ -202,7 +197,7 @@ class Simulacao:
 				else:
 					y = mouse_y - disty*(1-self.zoom**-1)
 				print x,y
-				self.corpos.append(Corpo(x,y,0.0,0.0,10.0))
+				self.corpos.append(Corpo(x,y,0.0,0.0,1.0))
 
 			if mouse[2]:
 				mouse_x,mouse_y = pygame.mouse.get_pos()
@@ -218,7 +213,7 @@ class Simulacao:
 				else:
 					y = mouse_y - disty*(1-self.zoom**-1)
 				print x,y
-				self.corpos.append(Corpo(x,y,2.0,0.0,100.0))
+				self.corpos.append(Corpo(x,y,2.0,0.0,10.0))
 
 			if key_pressed[K_DOWN]: #Move a camera para BAIXO quando apertado a SETA PARA BAIXO.
 				for i in self.corpos:
@@ -296,56 +291,28 @@ class Simulacao:
 			if P.y > self.tamanho[1]:   P.y = 0;
 			if P.y < 0:     P.y = self.tamanho[1];
 
-	#Detecta a colisao estre objetos#
-	def aglomerationDetect(self):
+	def elastic(self):
 		for C in self.corpos:
 			for C2 in self.corpos:
 				if C != C2:
-					Distancia2 = sqrt(  ((C.x-C2.x)**2)  +  ((C.y-C2.y)**2)  )
+					distancia = sqrt((C.x-C2.x)**2 + (C.y-C2.y)**2)
+					if distancia != 0 and distancia <= (C.raio + C2.raio):
+						C.x, C.y, C2.x, C2.y, C.velx, C.vely, C2.velx, C2.vely = pyplanets_calculations.collision(C.x, C.y, C.velx, C.vely, C.mass, C.raio, C2.x, C2.y, C2.velx, C2.vely, C2.mass, C2.raio)
 
-					if Distancia2 < (C.raio+C2.raio) and Distancia2 > (C.raio+C2.raio)/3.0*2: #Objects collision
-						if C.raio == 0:
-							self.corpos.remove(C)
-							return
-						elif C2.raio == 0:
-							self.corpos.remove(C2)
-							return
-						Distancia = C.raio+C2.raio
-						dif = (C.x-C2.x,C.y-C2.y)
-						anglo = atan2(dif[0],dif[1])
-						razao = C.raio/C2.raio
-						inter = (C.x+C.raio*-sin(anglo),C.y+C.raio*-cos(anglo))
-						C.x = inter[0] + C.raio*sin(anglo)
-						C.y = inter[1] + C.raio*cos(anglo)
-						C2.x = inter[0] + C2.raio*-sin(anglo)
-						C2.y = inter[1] + C2.raio*-cos(anglo)
-						C.velx = (C.velx*C.mass+C2.velx*C2.mass)/(C2.mass+C.mass)
-						C.vely = (C.vely*C.mass+C2.vely*C2.mass)/(C2.mass+C.mass)
-						C2.velx,C2.vely = C.velx,C.vely
-
-					elif Distancia2 <= (C.raio+C2.raio)/3.0*2: #Objects Fusion
-						C.velx = ((C.mass*C.velx)+(C2.mass*C2.velx))/(C.mass+C2.mass)
-						C.vely = ((C.mass*C.vely)+(C2.mass*C2.vely))/(C.mass+C2.mass)
-						C.x = ((C.mass*C.x)+(C2.mass*C2.x))/(C.mass+C2.mass)
-						C.y = ((C.mass*C.y)+(C2.mass*C2.y))/(C.mass+C2.mass)
-						C.mass += C2.mass
-						C.raio += C2.raio
-						C.cor = ((C.cor[0]+C2.cor[0])/2.0,(C.cor[1]+C2.cor[1])/2.0,(C.cor[2]+C2.cor[2])/2.0)
-						self.corpos.remove(C2)
 
 	def main_loop(self): #Roda a simulacao
-		while True:
-			
+		pygame.init()
+		while True:	
 			if not self.pausado:
 				self.move()
-				self.aglomerationDetect()
 				#self.Collision_with_edge()
+				self.elastic()
 				self.GetInput()
 				self.draw()
 			else:
 				self.GetInput()
 				self.draw()
-				time.sleep(0.01)
+				time.sleep(0.005)
 
 if __name__ == "__main__":
 	if not len(sys.argv[1:]):

@@ -1,4 +1,4 @@
 #! /usr/bin/python2.6
 #  -*- coding: utf-8 -*-
 from distutils.core import setup, Extension
-setup(name='contas', version='1.0', ext_modules=[Extension("contas", ["./lib/contasmodule.c"])])
+setup(name='pyplanets_calculations', version='1.0', ext_modules=[Extension("pyplanets_calculations", ["./lib/pyplanets_calculations_module.c"])])
