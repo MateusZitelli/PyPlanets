@@ -17,16 +17,17 @@ main(int argc, char **argv){
 }
 
 static PyObject *pyplanets_calculations_forc(PyObject *self, PyObject* args){
-	double x_diff, y_diff, distance, force, dist;
-	double ax, ay, ar, am, bx, by, br, bm;
+	double x_diff, y_diff, z_diff, distance, force, dist;
+	double ax, ay, az, ar, am, bx, by, bz, br, bm;
 
-	if (!PyArg_ParseTuple(args, "dddddddd", &ax , &ay , &ar , &am , &bx , &by , &br, &bm)) {
+	if (!PyArg_ParseTuple(args, "dddddddddd", &ax , &ay , &az , &ar , &am , &bx , &by , &bz , &br, &bm)) {
 		return NULL;
 	}
 	x_diff = ax - bx;
 	y_diff = ay - by;
+	z_diff = az - bz;
 
-	dist = sqrt(x_diff*x_diff + y_diff*y_diff);
+	dist = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
 	if(dist < (ar + br)) {
 		dist = ar + br;
 	}
@@ -36,7 +37,7 @@ static PyObject *pyplanets_calculations_forc(PyObject *self, PyObject* args){
 	 */
 	am = am * 10000000000;
 	bm = bm * 10000000000;
-	dist = dist * 1000000;
+	dist = dist * 1000000 ;
 
 	force = (CONST_GRAVITACIONAL * am * bm) / (dist*dist); //F = (Constant*massA*massB)/dist**2
 
@@ -44,16 +45,17 @@ static PyObject *pyplanets_calculations_forc(PyObject *self, PyObject* args){
 }
 
 static PyObject *pyplanets_calculations_dist(PyObject *self, PyObject* args){
-	double x_diff, y_diff, distance, force, dist;
-	double ax, ay, ar, am, bx, by, br, bm;
+	double x_diff, y_diff, z_diff, distance, force, dist;
+	double ax, ay, az, ar, am, bx, by, bz, br, bm;
 
-	if (!PyArg_ParseTuple(args, "dddddd", &ax , &ay, &ar , &bx , &by, &br)) {
+	if (!PyArg_ParseTuple(args, "dddddddd", &ax , &ay , &az , &ar , &bx , &by , &bz , &br)) {
 		return NULL;
 	}
 	x_diff = ax - bx;
 	y_diff = ay - by;
+	z_diff = az - bz;
 
-	dist = sqrt(x_diff*x_diff + y_diff*y_diff);
+	dist = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
 	if(dist < (ar + br)) {
 		dist = ar + br;
 	}

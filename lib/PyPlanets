@@ -2,8 +2,10 @@
 #  -*- coding: utf-8 -*-
 # Requires pygame
 """
-Copyright (C) 2010 Mateus Zitelli (zitellimateus@gmail.com)
-PyGravity is free software: you can redistribute it and/or modify
+PyPlanets - N-body simulation codded in python.
+Copyright (C) 2010  Mateus Zitelli
+
+This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -18,27 +20,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pygame , sys , time , random , pyplanets_calculations
+import Py3De as py3d
 from pygame.locals import *
 from math import *
 from decimal import *
 
-class Corpo:
-	def __init__(self,cordx,cordy,velxA,velyA,massa,raio = False): #(x,y,speedX,speedY,mass)
+class Corpo(py3d.Circle):
+	def __init__(self,cordx,cordy,cordz,velxA,velyA,velzA,massa,raio = False): #(x,y,speedX,speedY,mass)
 		self.x = cordx
 		self.y = cordy
+		self.z = cordz
 		self.mass = massa 
-		self.velx = float(velxA/10**0) #Cuidado: dependendo do valor pode estourar o Float
-		self.vely = float(velyA/10**0)
+		self.velx = float(velxA) #Cuidado: dependendo do valor pode estourar o Float
+		self.vely = float(velyA)
+		self.velz = float(velzA)
 		if not raio:
-			self.raio = (self.mass/pi*5)**(1/2.0)
+			self.size = (self.mass/pi*5)**(1/2.0)
 		else:
-			self.raio = raio
-		self.cor = (int(255-random.random()*200),int(255-random.random()*200),int(255-random.random()*200))
+			self.size = raio
+		self.color = (int(255-random.random()*200),int(255-random.random()*200),int(255-random.random()*200))
 
 class Simulacao:
 	def __init__(self,tamanho,relativity = False):
 		self.tamanho = tamanho
-		self.surface = pygame.display.set_mode((self.tamanho[0],self.tamanho[1]))
+		self.camera = py3d.Camera(0,0,-100,0,0,2)
+		self.scene = py3d.Scene(tamanho[0],tamanho[1],self.camera)
 		self.corpos = []
 		self.zoom = 1.0
 		self.vezes = 0
@@ -46,24 +52,25 @@ class Simulacao:
 		self.pausado = True
 		self.valores = {}
 		self.relativity = relativity
+		self.lines = False
 
 
 	def interacao(self,corpo_a,corpo_b):
 		if corpo_a.mass == 0:
 			corpo_a.mass = 0.1E-30
 		if not (corpo_a,corpo_b) in self.valores and not (corpo_b,corpo_a) in self.valores:
-			forc = pyplanets_calculations.forc(corpo_a.x,corpo_a.y,corpo_a.raio,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.raio,corpo_b.mass)
+			forc = pyplanets_calculations.forc(corpo_a.x,corpo_a.y,corpo_a.z,corpo_a.size,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_a.z,corpo_b.size,corpo_b.mass)
 			#print forc
 			#const_gravitacional = 6.67428E-11
-			xdif,ydif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y)
-			dist = pyplanets_calculations.dist(corpo_a.x,corpo_a.y,corpo_a.mass,corpo_b.x,corpo_b.y,corpo_b.mass) #Simplified to the next formula
+			xdif,ydif,zdif = (corpo_a.x-corpo_b.x) , (corpo_a.y-corpo_b.y) , (corpo_a.z-corpo_b.z)
+			dist = pyplanets_calculations.dist(corpo_a.x,corpo_a.y,corpo_a.z,corpo_a.size,corpo_b.x,corpo_b.y,corpo_b.z,corpo_b.size) #Simplified to the next formula
 			#forc = (const_gravitacional*(corpo_a.mass*10**10)*(corpo_b.mass*10**10))/(dist*10**6)**2 #F = (Constant*massA*massB)/dist**2
 
 		else:
 			if (corpo_b,corpo_a) in self.valores:
 				val = self.valores[(corpo_b,corpo_a)]
 				forc = val[0]
-				xdif,ydif = -val[1][0],-val[1][1]
+				xdif,ydif,zdif = -val[1][0],-val[1][1],-val[1][2]
 				dist = val[2]
 		#if self.relativity:
 			#mass = pyplanets_calculations.relativistic_mass(abs(corpo_a.velx),abs(corpo_a.vely),corpo_a.mass)
@@ -71,19 +78,28 @@ class Simulacao:
 			#mass = corpo_a.mass
 		mass = corpo_a.mass
 		#print corpo_a.mass/rel_mass
-		if dist <= corpo_a.raio+corpo_b.raio+10:
+		if dist <= corpo_a.size+corpo_b.size+10:
 			aceleration = (forc/mass)
 		else:
-			aceleration = (forc/mass)*10**3
+			aceleration = (forc/mass)
+
 		Xcomp = xdif/dist
-		Ycomp = ydif/dist	
+		Ycomp = ydif/dist
+		Zcomp = zdif/dist
 		corpo_a.velx -= aceleration * Xcomp
 		corpo_a.vely -= aceleration * Ycomp
-		self.valores[(corpo_a,corpo_b)] = (forc,(xdif,ydif),dist)
+		corpo_a.velz -= aceleration * Zcomp
+		self.valores[(corpo_a,corpo_b)] = (forc,(xdif,ydif,zdif),dist)
 
 	##############################
 	#Move os objetos a cada ciclo#
 	##############################
+	def rotacao(self,loc):
+		anglox = 360*((loc[0]-self.tamanho[0]/2.0)/self.tamanho[0])
+		angloy = 360*((loc[1]-self.tamanho[1]/2.0)/self.tamanho[1])
+		self.camera.rx = anglox
+		self.camera.ry = angloy
+
 	def move(self):
 		self.valores = {}
 		for cA in self.corpos:
@@ -94,28 +110,11 @@ class Simulacao:
 		for obj in self.corpos:
 			obj.x += obj.velx
 			obj.y += obj.vely
-	#################################
-	#"Pinta" os objetos a cada ciclo#
-	#################################
+			obj.z += obj.velz
+
 	def draw(self):
-		if not self.pintar:
-			self.surface.fill((0,0,0))
-		for C in self.corpos:
-			#Simulacao de Zoom#
-			distx = abs(C.x - self.tamanho[0]/2.0)
-			disty = abs(C.y - self.tamanho[1]/2.0)
-			if C.x < self.tamanho[0]/2.0:
-				x = C.x + distx*(1-self.zoom)
-			else:
-				x = C.x - distx*(1-self.zoom)
-
-			if C.y < self.tamanho[1]/2.0:
-				y = C.y + disty*(1-self.zoom)
-			else:
-				y = C.y - disty*(1-self.zoom)
-
-			pygame.draw.circle(self.surface,C.cor,(int(x),int(y)),int(round(C.raio*self.zoom)))
-		pygame.display.flip()
+		self.scene.render_order()
+		self.scene.render(self.lines,1)
 
 	def orbitas(self,n): #cria corpos distribuidos uniformemente em um quadrado
 		for i in range(n):
@@ -125,138 +124,51 @@ class Simulacao:
 
 	def criar(self,n,massa): #Cria corpos de forma randomica pela tela
 		for i in range(n):
-			self.corpos.append(Corpo(random.random()*self.tamanho[0],random.random()*self.tamanho[1],0,0,massa))
+			self.corpos.append(Corpo(random.random()*self.tamanho[0]/10-self.tamanho[0]/20,random.random()*self.tamanho[1]/10-self.tamanho[1]/20,random.random()*self.tamanho[0]/10-self.tamanho[0]/20,0,0,0,massa))
+			for C in self.corpos[:len(self.corpos)-1]:
+				self.scene.faces.append( py3d.Face( (C,self.corpos[-1]), (255,255,255) ) )
 
 	def demo(self):
-		self.zoom = 0.1
-		self.corpos = []
-		self.surface.fill((0,0,0))
-		self.corpos.append(Corpo(400,-500,0.7,0.0,500.0))
-		self.corpos.append(Corpo(400,1500,-0.7,0.0,500.0))
-		for i in range(20):
-			self.corpos.append(Corpo(400,i*30-400,2.0,0.0,10))
-		#self.corpos.append(Corpo(400,550,-2.0,0.0,0.1E-10))
-
-	def scan(self): #Precisa de melhorias # Gera uma imagem do campo gravitacional.
-		potencia = []
-		self.valores = {}
-		for i in range(180):
-			for j in range(160):
-				valponto = 0
-				a = Corpo(i*5,j*5,0,0,1)
-				for C in self.corpos:
-					valponto += self.interacao(a,C)
-				potencia.append(valponto)
-		ma = max(potencia)
-		for val in range(len(potencia)):
-			y,x = divmod(val,160)
-			temp = potencia[val]/float(ma)*255			
-			pygame.draw.circle(self.surface,(temp,temp,temp),(x*5,y*5),1)
-		print len(potencia)
-		pygame.display.flip()
-		while True:
-			event = pygame.event.poll()
-			if event.type == KEYDOWN:break
+		for i in range(3):
+			for j in range(3):
+				for k in range(3):
+					self.corpos.append(Corpo(i*10,j*10,k*10,0,0,0,10))
+					for C in self.corpos[:len(self.corpos)-1]:
+						self.scene.faces.append( py3d.Face( (C,self.corpos[-1]), (255,255,255) ) )
 
 	def GetInput(self): #Verificacao de eventos
 		key_pressed = pygame.key.get_pressed()
 		mouse = pygame.mouse.get_pressed()
-
 		for event in pygame.event.get():
 			if event.type == QUIT or key_pressed[K_ESCAPE]:
 				pygame.quit() #Fim do Script
 				sys.exit()
 
-			if mouse[0] and not key_pressed[K_n]:
-				mouse_x,mouse_y = pygame.mouse.get_pos()
-				#Correcao para o Zoom#
-				distx,disty = abs(mouse_x-self.tamanho[0]/2.0),abs(mouse_y-self.tamanho[1]/2.0)
-				if mouse_x < self.tamanho[0]/2.0:
-					x = mouse_x + distx*(1-self.zoom**-1)
-				else:
-					x = mouse_x - distx*(1-self.zoom**-1)
+			if event.type == MOUSEMOTION:
+				if event.buttons[2]:
+					loc = self.tamanho[0]/2 - event.pos[0]
+					self.camera.z = loc
+					
+				if event.buttons[0]:
+					self.rotacao(event.pos)
 
-				if mouse_y < self.tamanho[1]/2.0:
-					y = mouse_y + disty*(1-self.zoom**-1)
-				else:
-					y = mouse_y - disty*(1-self.zoom**-1)
-				print x,y
-				self.corpos.append(Corpo(x,y,0.0,0.0,100.0))
 
-			if mouse[1]:
-				mouse_x,mouse_y = pygame.mouse.get_pos()
-				#Correcao para o Zoom#
-				distx,disty = abs(mouse_x-self.tamanho[0]/2.0),abs(mouse_y-self.tamanho[1]/2.0)
-				if mouse_x < self.tamanho[0]/2.0:
-					x = mouse_x + distx*(1-self.zoom**-1)
-				else:
-					x = mouse_x - distx*(1-self.zoom**-1)
-
-				if mouse_y < self.tamanho[1]/2.0:
-					y = mouse_y + disty*(1-self.zoom**-1)
-				else:
-					y = mouse_y - disty*(1-self.zoom**-1)
-				print x,y
-				self.corpos.append(Corpo(x,y,0.0,0.0,1.0))
-
-			if mouse[2]:
-				mouse_x,mouse_y = pygame.mouse.get_pos()
-				#Correcao para o Zoom#
-				distx,disty = abs(mouse_x-self.tamanho[0]/2.0),abs(mouse_y-self.tamanho[1]/2.0)
-				if mouse_x < self.tamanho[0]/2.0:
-					x = mouse_x + distx*(1-self.zoom**-1)
-				else:
-					x = mouse_x - distx*(1-self.zoom**-1)
-
-				if mouse_y < self.tamanho[1]/2.0:
-					y = mouse_y + disty*(1-self.zoom**-1)
-				else:
-					y = mouse_y - disty*(1-self.zoom**-1)
-				print x,y
-				self.corpos.append(Corpo(x,y,2.0,0.0,10.0))
 
 			if key_pressed[K_DOWN]: #Move a camera para BAIXO quando apertado a SETA PARA BAIXO.
-				for i in self.corpos:
-					i.y -= 50/self.zoom
+				self.camera.z -= 1000
 
 			elif key_pressed[K_UP]: #Move a camera para CIMA quando apertado a SETA PARA CIMA.
-				for i in self.corpos:
-
-					i.y += 50/self.zoom
+				self.camera.z += 1000
 
 			elif key_pressed[K_LEFT]: #Move a camera para ESQUERDA quando apertado a SETA PARA ESQUERDA.
-				for i in self.corpos:
-					i.x += 50/self.zoom
+				self.camera.x += 1
 
 			elif key_pressed[K_RIGHT]: #Move a camera para DIREITA quando apertado a SETA PARA DIREITA.
-				for i in self.corpos:
-					i.x -= 50/self.zoom
-
-			if key_pressed[K_r]: #Deixa o rastro dos objetos #Precisa de melhoras, nao funciona com a variacao do zoom.
-				self.pintar = not self.pintar
+				self.camera.x -= 1
 
 			elif key_pressed[K_c]: #Deleta todos objetos da tela
 				self.corpos = []
-				self.surface.fill((0,0,0))
-				self.zoom = 1.0
-
-			elif key_pressed[K_n] and mouse[0]:	#				Cria um novo corpo na tela				      #
-				local = pygame.mouse.get_pos()  #A velocidade e definida pela distancia que o mouse for arrastado do ponto de inicio do clique#
-				tela_rastro = pygame.display.set_mode((self.tamanho[0],self.tamanho[1]))#		Estado rudimentar, precisa de melhoras			      #
-				while True:
-					tela_rastro.fill((0,0,0))
-					for event in pygame.event.get():
-						pass
-					ate = pygame.mouse.get_pos()
-					velocidadeX = (ate[0]-local[0])/100.0
-					velocidadeY = (ate[1]-local[1])/100.0
-					pygame.draw.line(tela_rastro,(255,255,255),local,ate)
-					pygame.display.flip()
-					event2 = pygame.event.poll()
-					if event2.type == MOUSEBUTTONUP: break
-				print "New Body:"
-				massa = raw_input("Mass:")
-				self.corpos.append(Corpo(local[0],local[1],velocidadeX,velocidadeY,float(massa)))
+				self.scene.clean()
 
 			elif key_pressed[K_p]: #tecla P => Pausa/Roda o jogo
 				self.pausado = not self.pausado
@@ -264,23 +176,11 @@ class Simulacao:
 			elif key_pressed[K_t]: #Tecla T => Corpos randomicos pela tela
 				self.criar(input("How many Bodies?"),input("\nMass:"))
 
-			elif key_pressed[K_KP_PLUS]: #Tecla + => Almenta o Zoom
-				self.zoom *= 2.0
-
-			elif key_pressed[K_KP_MINUS]: #Tecla - => Diminui o Zoom
-				self.zoom /= 2.0
-
-			elif key_pressed[K_o]: #Tecla O => Gera quadrado de corpos
-				self.orbitas(input("How many Bodies?"))
-
-			elif key_pressed[K_0]: #Tecla 0 => Zoom volta ao padrao
-				self.zoom = 1.0
-
-			elif key_pressed[K_s]: #Tecla S => Scan do campo gravitacional
-				self.scan()
-
-			elif key_pressed[K_d]: #Tecla D => Demo: 3 body problem
+			elif key_pressed[K_d]: #Tecla D => Demo:
 				self.demo()
+
+			elif key_pressed[K_v]:
+				self.lines = not self.lines
 
 
 
@@ -295,24 +195,45 @@ class Simulacao:
 		for C in self.corpos:
 			for C2 in self.corpos:
 				if C != C2:
-					distancia = sqrt((C.x-C2.x)**2 + (C.y-C2.y)**2)
-					if distancia != 0 and distancia <= (C.raio + C2.raio):
-						C.x, C.y, C2.x, C2.y, C.velx, C.vely, C2.velx, C2.vely = pyplanets_calculations.collision(C.x, C.y, C.velx, C.vely, C.mass, C.raio, C2.x, C2.y, C2.velx, C2.vely, C2.mass, C2.raio)
+					distancia = sqrt((C.x-C2.x)**2 + (C.y-C2.y)**2+(C.z-C2.z)**2)
+					if distancia != 0 and distancia <= (C.size + C2.size):
+						C.x, C.y, C2.x, C2.y, C.velx, C.vely, C2.velx, C2.vely = pyplanets_calculations.collision(C.x, C.y, C.velx, C.vely, C.mass, C.size, C2.x, C2.y, C2.velx, C2.vely, C2.mass, C2.size)
+
+	def open_obj(self,arquivo,cena):
+		arq = open(arquivo,"r")
+		for line in arq.readlines():
+			line = line.split()
+			if "v" in line:
+				if line[0] == "v":
+					self.corpos.append(Corpo(float(line[1]),float(line[2]),float(line[3])*-1,0,0,0,0.01))
+			if "f" in line:
+				if line[0] == "f":
+					pontos = []
+					for i in line[1:]:
+						i = i.split("/")[0]
+						pontos.append(self.corpos[int(i)-1])
+					ra = random.random()
+					self.scene.faces.append( py3d.Face( pontos, (255*ra,255*ra,255*ra) ) )
+		if len(self.scene.faces):
+			self.scene.m_point()
+			self.scene.cores()
+		self.scene.render_order()
 
 
 	def main_loop(self): #Roda a simulacao
 		pygame.init()
-		while True:	
+		#self.open_obj("./Objs/sample.obj",self)
+		while True:
+			self.scene.objects = self.corpos	
 			if not self.pausado:
 				self.move()
 				#self.Collision_with_edge()
-				self.elastic()
+				#self.elastic()
 				self.GetInput()
 				self.draw()
 			else:
 				self.GetInput()
 				self.draw()
-				time.sleep(0.005)
 
 if __name__ == "__main__":
 	if not len(sys.argv[1:]):
