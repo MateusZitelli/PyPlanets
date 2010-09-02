@@ -1,11 +1,12 @@
-		PyGame Version 0.3
+		PyGame Version 0.4
 
 PyPlanets is Free Software!
-PyPlanets is a gravitational simulator written in python.
+PyPlanets is a 3D gravitational simulator written in python.
 
 Requeriments:
 	*Python(Tested in version 2.6)
 	*PyGame(Tested in version 1.9)
+	*Py3De(Include in the repository)
         *python-dev
 
 How to install:
@@ -17,16 +18,12 @@ How to install:
 
 Keys:
 	*Arrows => move the camera.
-	*O => Create a Uniform square with the bodies.
 	*T => Create bodies randomly in the screen.
-	*N + Left Click => Create a new body (The speed of the object is defined by the distance and direction that the mouse is dragged.)
-	*S => Makes a image of the gravitational field. #have problems
 	*C => Clean the screen.
-	*R => Draw the trace of the objects. (On/Off)
 	*P => Pause the simulation. (On/Off)
-	*D => Demo situation. (3 body problem)
-	*+/- => Control of the zoom.
-	*0 => Reset the zoom to default.
+	*D => Demo situation.
+	*Mouse motion + left click => Camera rotation.
+	*Mouse motion + right click => Camera distance from center.
 
 Author:
 	*Mateus Zitelli (zitellimateus@gmail.com)
