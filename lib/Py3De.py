@@ -214,7 +214,7 @@ class Scene:
 				if dist == 0: dist = 0.01
 				aparent_x = (ax-self.camera.x)*self.view_distance/dist
 				aparent_y = -(ay-self.camera.y)*self.view_distance/dist
-				aparent_size = obj.size*10/dist
+				aparent_size = obj.size*300/dist
 				obj.render(self.surface,aparent_x+self.width/2,aparent_y+self.eigth/2,aparent_size)
 
 		pygame.display.flip()
