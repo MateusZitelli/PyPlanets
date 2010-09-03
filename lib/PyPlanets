@@ -178,6 +178,7 @@ class Simulacao:
 
 			elif key_pressed[K_d]: #Tecla D => Demo:
 				self.demo()
+				time.sleep(0.05)
 
 			elif key_pressed[K_v]:
 				self.lines = not self.lines
