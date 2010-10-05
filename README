@@ -6,7 +6,7 @@ PyPlanets is a 3D gravitational simulator written in python.
 Requeriments:
 	*Python(Tested in version 2.6)
 	*PyGame(Tested in version 1.9)
-	*Py3De(Include in the repository)
+	*Py3De(Include in the PyPlanets' repository)
         *python-dev
 
 How to install:
